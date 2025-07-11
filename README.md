@@ -1,0 +1,1 @@
+This is a Python project that I'm working on which currently keeps track of your tasks which you can save in a .JSON file using serialization, with new features like weekly and daily streaks, event tracking, more advanced UI, and more coming soon to help me learn more about the Python programming language and how actual software projects are made.
