@@ -1,0 +1,17 @@
+[
+    {
+        "username": "Susan",
+        "filename": "data\\Susan\\tasks.json",
+        "tasks": []
+    },
+    {
+        "username": "Jane",
+        "filename": "data\\Jane\\tasks.json",
+        "tasks": []
+    },
+    {
+        "username": "Josh",
+        "filename": "data\\Josh\\tasks.json",
+        "tasks": []
+    }
+]
