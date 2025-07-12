@@ -72,7 +72,6 @@ def load_user():
 
         # Initialize TaskManager with loaded tasks:
         user.task_manager = TaskManager(tasks=loaded_tasks, user_name=user.username)
-        user.task_manager.list_tasks()
         return user.task_manager
     else:
         print(Fore.RED + f"No data found for user '{user.username}'. Please create a new account first.")
