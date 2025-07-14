@@ -1,153 +1,100 @@
-from colorama import init, Fore
 from datetime import datetime, timedelta
-from difflib import get_close_matches
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import re
-import json
+from colorama import init, Fore
+from difflib import get_close_matches
 from pathlib import Path
+
+init(autoreset=True)
 
 def match_input(user_input, options, cutoff=0.6):
     return get_close_matches(user_input.lower(), options, n=1, cutoff=cutoff)
 
-init(autoreset=True)
-
 class Habit:
-    def __init__(self, name, frequency, streak, last_completed):
+    FREQ_DELTAS = {
+        "daily": timedelta(days=1),
+        "weekly": timedelta(weeks=1),
+        "monthly": relativedelta(months=1),
+        "yearly": relativedelta(years=1)
+    }
+
+    def __init__(self, name, frequency, streak=0, last_completed=None):
         self.name = name
         self.frequency = frequency
         self.streak = streak
-        self.last_completed = last_completed
-    
-    def marked_completed(self, today):  
-        today = datetime.now()
-        self.time_passed = today - last_completed # An error might occur beccause datetime and timedelta are being used together and both support different features.
-
-        last_completed += 1
-        self.reset_streak_if_needed()
-        if self.streak == True:
-            self.streak += 1                                 
-            print(Fore.GREEN + f"You now have a {self.streak} {self.frequency} streak!")
-        else:
-            self.streak = 0
-            print(Fore.RED + f"Your streak has been set to zero. Remember, consistency is key.")
-
-
-    def reset_streak_if_needed(self, today):
-        while True:
-            frequencies = {
-            'daily': timedelta(days=1),
-            'weekly': timedelta(weeks=1),
-            'monthly': relativedelta(months=1),
-            'yearly': relativedelta(years=1)
-            }
-
-            self.frequency = frequencies.get(self.frequency.lower())
-
-            if self.time_passed > timedelta(self.frequency):
-                return False
-            else:
-                return True
-        
+        self.last_completed = last_completed or datetime.now()
 
     def to_dict(self):
         return {
-            'Name': self.name,
-            'Frequency': self.frequency,
-            'Streak': self.streak,
-            'Last completed': self.last_completed
+            "name": self.name,
+            "frequency": self.frequency,
+            "streak": self.streak,
+            "last_completed": self.last_completed.isoformat()
         }
 
+    @classmethod
     def from_dict(cls, data):
         return cls(
-            name=data['Name'],
-            frequency=data['Frequency'],
-            streak=data['Streak'],
-            last_completed=data['Last completed']
-            )
-    
+            name=data["name"],
+            frequency=data["frequency"],
+            streak=data["streak"],
+            last_completed=datetime.fromisoformat(data["last_completed"])
+        )
+
+    def mark_completed(self):
+        now = datetime.now()
+        delta = now - self.last_completed
+        freq_delta = self.FREQ_DELTAS[self.frequency]
+        
+        if isinstance(freq_delta, relativedelta):
+            freq_delta = now - (now - freq_delta)
+        if delta <= freq_delta:
+            self.streak += 1
+            print(Fore.GREEN + f"Streak continued! {self.streak} in a row.")
+        else:
+            self.streak = 1
+            print(Fore.YELLOW + "Missed frequency window — streak reset to 1.")
+        self.last_completed = now
+
 class HabitTracker:
-    def __init__(self, habits):
-        self.habits = []
+    def __init__(self, habits=None):
+        self.habits = habits or []
 
     def add_habit(self):
-        while True:   
-            habit_name = input("Please enter the name of the habit you would like to add: ").lower().strip()
-            Habit.name = habit_name
-            habit_freq = input("How frequently are you aiming to do your habit? Please type something along the lines of 'daily' or 'weekly': ")
-            refined_freq = match_input(habit_freq, ['daily', 'weekly', 'monthly', 'yearly'])
-            if refined_freq and refined_freq[0] == 'daily':
-                habit = Habit(
-                name=habit_name,
-                frequency=refined_freq,
-            )
-                print(Fore.GREEN + "Your new task has been added successfully:")
-                self.list_habit()
-                if habit not in self.habits:
-                    self.habits.append(habit)
-
-            elif refined_freq and refined_freq[0] == 'weekly':
-                habit = Habit(
-                name=habit_name,
-                frequency=refined_freq,
-            )
-                print(Fore.GREEN + "Your new task has been added successfully:")
-                self.list_habit()
-                if habit not in self.habits:
-                    self.habits.append(habit)
-            
-            elif refined_freq and refined_freq[0] == 'yearly':
-                habit = Habit(
-                name=habit_name,
-                frequency=refined_freq,
-            )
-                print(Fore.GREEN + "Your new task has been added successfully:")
-                self.list_habit()
-                if habit not in self.habits:
-                    self.habits.append(habit)
-
-            else:
-                print(Fore.RED + f"Sorry, '{habit_freq}' does not seem to be a valid option, please try again.")
-                continue
+        name = input("Name of habit: ").strip()
+        freq_in = input("Frequency ('daily', 'weekly', 'monthly', 'yearly'): ").strip()
+        refined = match_input(freq_in, list(Habit.FREQ_DELTAS.keys()))
+        if not refined:
+            print(Fore.RED + "Invalid frequency.")
+            return
+        habit = Habit(name, refined[0])
+        self.habits.append(habit)
+        print(Fore.GREEN + f"Habit '{name}' added with '{refined[0]}' frequency.")
 
     def list_habits(self):
         if not self.habits:
-            print(Fore.YELLOW + "You currently have no habits.")
+            print(Fore.YELLOW + "No habits yet.")
             return
-        print(Fore.GREEN + "Your list of tasks includes the following:")
-        for habit in self.habits:
-            print(f"- {habit.name} | Frequency: {habit.frequency} | "
-            f"Streak: {habit.streak} | Last Completed: {habit.last_completed}")
+        for h in self.habits:
+            print(f"- {h.name} | {h.frequency} | streak: {h.streak} | last: {h.last_completed:%Y-%m-%d %H:%M}")
 
-    def mark_habit(self, index):
-        while True:
-            habit_marked = input("What task would you like to mark as done: ").strip().lower()
-            for habit in self.habits:
-                refined_habmar = match_input(habit_marked, [habit.name])
-                if refined_habmar and refined_habmar[0] == habit.title:
-                    Habit.marked_completed()
-                    return
-            print(Fore.RED + f"Sorry, '{habit_marked}' was not found in your list of habits.")
-            continue
-    
-    def check_all_habits(self):
-        for habit in self.habits:
-            if Habit.time_passed > Habit.timedelta(self.frequency):        
-                habit.streak = 0
-            else:
-                continue
-    
-    def save(self, filename):
-        import storage
-        path = Path("data") / f"{self.user_name}" / "habits.json"
+    def mark_habit(self):
+        name = input("Which habit to mark complete? ").strip()
+        for h in self.habits:
+            if match_input(name, [h.name]):
+                h.mark_completed()
+                return
+        print(Fore.RED + "No matching habit.")
+
+    def save(self, username):
+        from storage import save_habits
+        path = Path("data") / username / "habits.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        storage.save_tasks(self.habits, path)
-        print(Fore.GREEN + f"Your habits have been saved, {self.user_name.capitalize()}")
-        
-    
-    def load(self, filename):
-        import storage
-        path = Path("data") / f"{self.user_name}" / "habits.json"
+        save_habits(self.habits, path)
+        print(Fore.GREEN + "Habits saved.")
+
+    def load(self, username):
+        from storage import load_habits
+        path = Path("data") / username / "habits.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        storage.load_tasks(self.habits, path)
-        print(Fore.GREEN + f"Your habits have been loaded, {self.user_name.capitalize()}")
+        self.habits = load_habits(path)
+        print(Fore.GREEN + "Habits loaded.")
