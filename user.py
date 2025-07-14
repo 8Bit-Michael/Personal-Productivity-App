@@ -1,37 +1,51 @@
 from colorama import init, Fore
 from difflib import get_close_matches
 from pathlib import Path
-from task_manager import User
+from task_manager import TaskManager
 import json
 import os
+import storage
 
 init(autoreset=True)
 
 def match_input(user_input, options, cutoff=0.6):
     return get_close_matches(user_input.lower(), options, n=1, cutoff=cutoff)
 
-user = User(username='', filename='')
+class User:
+    def __init__(self, username, filename):
+        self.username = username
+        self.filename = filename
+        self.task_manager = TaskManager(tasks=[], user_name=username)
+
+    def return_file(self):
+        return Path("data") / self.username / "tasks.json"
+
+    def display_profile(self):
+        print(Fore.GREEN + "Your profile summary includes the following:\n")
+        print(f"Name - {self.username}\n"       
+              f"Tasks - {self.task_manager.tasks}\n"
+              f"Number of tasks - {len(self.task_manager.tasks)}\n"
+              f"File name = {self.filename}")
+
+user = None
 
 def create_new_user():
+    global user
     name_input = input("Please enter your username: ").strip()
-    user.username = name_input.title()  # Use title case for nicer usernames
+    username = name_input.title()
 
-    # Create directory and tasks.json path:
-    path = Path("data") / user.username / "tasks.json"
+    path = Path("data") / username / "tasks.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    user.filename = path
 
-    from task_manager import TaskManager
-    user.task_manager = TaskManager(tasks=[], user_name=user.username)
+    user = User(username=username, filename=path)
 
-    # Save the user info to users.json:
-    new_user = {
+    new_user_data = {
         "username": user.username,
         "filename": str(user.filename),
         "tasks": []
     }
 
-    file_path = 'data/users.json' # Here's what's not saving the data to users.json.
+    file_path = 'data/users.json'
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             try:
@@ -43,9 +57,9 @@ def create_new_user():
 
     if any(u['username'] == user.username for u in data):
         print(Fore.YELLOW + f"User '{user.username}' already exists. Please log in instead.")
-        return
+        return None
 
-    data.append(new_user)
+    data.append(new_user_data)
 
     with open(file_path, 'w') as file:
         json.dump(data, file, indent=4)
@@ -55,28 +69,26 @@ def create_new_user():
 
     print(Fore.GREEN + f"User '{user.username}' created! Empty task file created at {path}")
     user.display_profile()
+    return user.task_manager
 
 def load_user():
-    from task_manager import TaskManager
-    import storage
-
+    global user
     reload_name = input("Please enter your username: ").strip()
-    user.username = reload_name.title()
-    user.filename = Path("data") / user.username / "tasks.json"
+    username = reload_name.title()
+    filename = Path("data") / username / "tasks.json"
 
-    if user.filename.exists():
-        print(Fore.GREEN + f"Welcome back, {user.username}!")
-
-        # Load tasks from the user's file:
-        loaded_tasks = storage.load_tasks(user.filename)
-
-        # Initialize TaskManager with loaded tasks:
-        user.task_manager = TaskManager(tasks=loaded_tasks, user_name=user.username)
+    if filename.exists():
+        print(Fore.GREEN + f"Welcome back, {username}!")
+        loaded_tasks = storage.load_tasks(filename)
+        user = User(username=username, filename=filename)
+        user.task_manager = TaskManager(tasks=loaded_tasks, user_name=username)
         return user.task_manager
     else:
-        print(Fore.RED + f"No data found for user '{user.username}'. Please create a new account first.")
+        print(Fore.RED + f"No data found for user '{username}'. Please create a new account first.")
         return None
 
 def get_user_file():
+    global user
     path = Path("data") / user.username / "tasks.json"
     return path.exists()
+
