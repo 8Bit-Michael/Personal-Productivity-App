@@ -2,6 +2,7 @@ import json
 from colorama import Fore
 from task_manager import Task
 from habit_tracker import Habit
+from calendar_events import Event
 
 def save_tasks(task_list, filename):
     # This is a one liner which uses each task in the task list to run to_dict()
@@ -61,10 +62,17 @@ def save_habits(habits, filename):
     except (FileNotFoundError, json.JSONDecodeError):
         existing_habits = []
 
-    existing_keys = {(h['name'], h['frequency']) for h in existing_habits}
+    existing_keys = {(h['name'], h['frequency'], h['streak']) for h in existing_habits}
     for habit in new_habits:
-        key = (habit['name'], habit['frequency'])
-        if key not in existing_keys:
+        found = False
+        for existing_habit in existing_habits:
+            if existing_habit['name'] == habit['name'] and existing_habit['frequency'] == habit['frequency']:
+                # Update the streak if it's different:
+                if existing_habit.get('streak') != habit['streak']:
+                    existing_habit['streak'] = habit['streak']
+                found = True
+                break
+        if not found:
             existing_habits.append(habit)
 
     with open(filename, 'w') as file:
@@ -84,4 +92,40 @@ def load_habits(filename):
         return []
     except json.JSONDecodeError:
         print(Fore.RED + "Error reading habit file.")
+        return []
+
+def save_events(events, filename):
+    new_events = [event.to_dict() for event in events if isinstance(event, Event)]
+
+    try:
+        with open(filename, 'r') as file:
+            existing_events = json.load(file)
+            if not isinstance(existing_events, list):
+                existing_events = []
+    except (FileNotFoundError, json.JSONDecodeError):
+        existing_events = []
+
+    existing_keys = {(e['title'], e['date']) for e in existing_events}
+    for event in new_events:
+        key = (event['title'], event['date'])
+        if key not in existing_keys:
+            existing_events.append(event)
+
+    with open(filename, 'w') as file:
+        json.dump(existing_events, file, indent=4)
+
+def load_events(filename):
+    try:
+        with open(filename, 'r') as file:
+            events_dict = json.load(file)
+            loaded_events = [Event.from_dict(e) for e in events_dict]
+        print(Fore.GREEN + "Events loaded:")
+        for e in loaded_events:
+            print(f"- {e.title} | Date: {e.date} | Description: {e.description}")
+        return loaded_events
+    except FileNotFoundError:
+        print(Fore.RED + "No events file found.")
+        return []
+    except json.JSONDecodeError:
+        print(Fore.RED + "Error reading event file.")
         return []
