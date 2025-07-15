@@ -3,6 +3,7 @@ from colorama import init, Fore
 from difflib import get_close_matches
 import user
 from habit_tracker import HabitTracker
+from calendar_events import Calendar
 
 init(autoreset=True)
 
@@ -13,6 +14,7 @@ if __name__ == '__main__':
     while True:
         manager = TaskManager(tasks=[], user_name='')
         habit = HabitTracker(habits=[])
+        calendar = Calendar()
 
         login_data = input(
             "Welcome to my task manager app, to start please type in one of the following numbers:\n"
@@ -44,9 +46,9 @@ if __name__ == '__main__':
                 continue
 
         elif refined_login and refined_login[0] == '3':
-            print("Okay, exiting program...")
-            exit()
-
+            print("Okay, goodbye!")
+            raise RuntimeError("Exited program.")
+        
         else:
             print(Fore.RED + f"Sorry, '{login_data}' is not a valid option.")
             continue
@@ -67,7 +69,7 @@ if __name__ == '__main__':
             "9. Calendar & Events.\n"
             "10. Exit\n")
 
-            refined_user_choice = match_input(user_choice, ['1', '2', '3', '4', '5', '6', '7', '8', '9'])
+            refined_user_choice = match_input(user_choice, ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
 
             if refined_user_choice and refined_user_choice[0] == '1':
                 while True:
@@ -112,10 +114,37 @@ if __name__ == '__main__':
             elif refined_user_choice and refined_user_choice[0] == '8':
                 manager.load_from_file()
             elif refined_user_choice and refined_user_choice[0] == '9':
-                pass # This will be where the calender and events options go.
+                while True:
+                    events_choice = input("Welcome to the events manager! Please choose one of the following:\n"
+                        "1. View events.\n" 
+                        "2. Add event.\n"
+                        "3. Get upcoming events.\n"
+                        "4. Save event.\n"
+                        "5. Load event.\n"
+                        "6. Back\n")
+
+                    refined_event_choice = match_input(events_choice, ['1', '2', '3', '4', '5', '6'])
+
+                    if refined_event_choice and refined_event_choice[0] == '1':
+                        calendar.list_events()
+                    elif refined_event_choice and refined_event_choice[0] == '2':
+                        calendar.add_event()
+                    elif refined_event_choice and refined_event_choice[0] == '3':
+                        calendar.get_upcoming_events()
+                    elif refined_event_choice and refined_event_choice[0] == '4':
+                        calendar.save(username=user_data.user_name)
+                    elif refined_event_choice and refined_event_choice[0] == '5':
+                        calendar.load(username=user_data.user_name)
+                    elif refined_event_choice and refined_event_choice[0] == '6':
+                        break
+                    else:
+                        print(Fore.RED + f"Sorry, '{events_choice}' is not a valid option.")
+                        continue
+
             elif refined_user_choice and refined_user_choice[0] == '10':
                 print("Okay, goodbye!")
-                exit()
+                raise RuntimeError("Exited program.")
+            
             else:
                 print(Fore.RED + f"Sorry, '{user_choice}' is not a valid option.")
                 continue
