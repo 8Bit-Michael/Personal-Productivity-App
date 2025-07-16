@@ -119,11 +119,12 @@ if __name__ == '__main__':
                         "1. View events.\n" 
                         "2. Add event.\n"
                         "3. Get upcoming events.\n"
-                        "4. Save event.\n"
-                        "5. Load event.\n"
-                        "6. Back\n")
+                        "4. Save events.\n"
+                        "5. Load events.\n"
+                        "6. Remove event.\n"
+                        "7. Back\n")
 
-                    refined_event_choice = match_input(events_choice, ['1', '2', '3', '4', '5', '6'])
+                    refined_event_choice = match_input(events_choice, ['1', '2', '3', '4', '5', '6', '7'])
 
                     if refined_event_choice and refined_event_choice[0] == '1':
                         calendar.list_events()
@@ -136,6 +137,8 @@ if __name__ == '__main__':
                     elif refined_event_choice and refined_event_choice[0] == '5':
                         calendar.load(username=user_data.user_name)
                     elif refined_event_choice and refined_event_choice[0] == '6':
+                        calendar.remove_event()
+                    elif refined_event_choice and refined_event_choice[0] == '7':
                         break
                     else:
                         print(Fore.RED + f"Sorry, '{events_choice}' is not a valid option.")
