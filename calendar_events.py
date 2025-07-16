@@ -73,41 +73,54 @@ class Calendar:
             print(Fore.YELLOW + "No events available.")
             return
         now = datetime.now()
+        found = False
 
         print(Fore.GREEN + "Your events for this week include the following: ")
         for e in self.events:
             event_date = datetime.strptime(e.date, "%Y-%m-%d")
             if now <= event_date < now + relativedelta(weeks=1):
                 print(Fore.GREEN + f" - {e.title} | Date: {event_date:%Y-%m-%d} | Description: {e.description}")
+                found = True
+
+        if not found:
+            print(" - None found.")
 
         print(Fore.GREEN + "Your events for this month include the following: ")
         for e in self.events:
             event_date = datetime.strptime(e.date, "%Y-%m-%d")
             if now <= event_date < now + relativedelta(months=1):
                 print(Fore.GREEN + f" - {e.title} | Date: {event_date:%Y-%m-%d} | Description: {e.description}")
+                found = True
+            
+        if not found:
+            print(" - None found.")
 
         print(Fore.GREEN + "Your events for this year include the following: ")
         for e in self.events:
             event_date = datetime.strptime(e.date, "%Y-%m-%d")
             if now <= event_date < now + relativedelta(years=1):
                 print(Fore.GREEN + f" - {e.title} | Date: {event_date:%Y-%m-%d} | Description: {e.description}")
+                found = True
+            
+        if not found:
+            print(" - None found.")
 
     def remove_event(self):
         while True:
             name = input("Title of event to remove: ").strip()
             for e in self.events:
-                if match_input(name, [e.title]):
+                if name == e:
                     self.events.remove(e)
                     print(Fore.GREEN + f"Removed task '{e.title}'.")
                     return
-            print(Fore.RED + "No matching task found.")
+            print(Fore.RED + "No matching event found.")
 
     def get_upcoming_events(self):
         while True:
             now = datetime.now()
             upcoming_range = input("By what range would you like to see your upcoming events(weekly, monthly or yearly): ")
             refined_range = match_input(upcoming_range, ['weekly', 'monthly', 'yearly'])
-            
+                
             found = False
 
             if refined_range[0] == 'weekly':
@@ -117,31 +130,38 @@ class Calendar:
                     if 0 <= (event_date - now).days < 7:
                         print(Fore.GREEN + f" - {e.title} | Date: {event_date:%Y-%m-%d} | Description: {e.description}")
                         found = True
-                
+                    
                 if not found:
                     print("None found.")
+
+                break
 
             elif refined_range[0] == 'monthly':
                 print(Fore.GREEN + "Your events for this month include the following: ")
                 for e in self.events:
                     event_date = datetime.strptime(e.date, "%Y-%m-%d")
-                    if 0 <= (event_date - now).days < relativedelta(months=1):
+                    if 0 <= (event_date - now).days < 30:
                         print(Fore.GREEN + f" - {e.title} | Date: {event_date:%Y-%m-%d} | Description: {e.description}")
                         found = True
+
                 if not found:
                     print("None found.")
-
+                    
+                break
 
             elif refined_range[0] == 'yearly':
                 print(Fore.GREEN + "Your events for this year include the following: ")
                 for e in self.events:
                     event_date = datetime.strptime(e.date, "%Y-%m-%d")
-                    if 0 <= (event_date - now).days < relativedelta(years=1):
+                    if 0 <= (event_date - now).days < 365:
                         print(Fore.GREEN + f" - {e.title} | Date: {event_date:%Y-%m-%d} | Description: {e.description}")
                         found = True
+                
                 if not found:
                     print("None found.")
-           
+                    
+                break
+            
             else:
                 print(Fore.RED + f"Sorry, '{upcoming_range}' is not a valid input, please try again.")
                 continue
